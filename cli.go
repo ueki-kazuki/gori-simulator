@@ -22,13 +22,13 @@ type CLI struct {
 
 func getReservedInstances(s *session.Session) ([]*ec2.ReservedInstances, error) {
 	svc := ec2.New(s)
-	filters := []*ec2.Filter{
-		&ec2.Filter{
-			Name:   aws.String("state"),
-			Values: []*string{aws.String("active")}},
-	}
 	param := ec2.DescribeReservedInstancesInput{
-		Filters: filters,
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("state"),
+				Values: []*string{aws.String("active")},
+			},
+		},
 	}
 	result, err := svc.DescribeReservedInstances(&param)
 	if err != nil {
