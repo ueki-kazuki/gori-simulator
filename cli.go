@@ -96,7 +96,25 @@ func (cli *CLI) Run(args []string) int {
 		fmt.Println(err.Error())
 		return ExitCodeError
 	}
+
+	platform := func(p1, p2 *ec2.Instance) bool {
+		return *p1.Platform < *p2.Platform
+	}
+
+	instancetype := func(p1, p2 *ec2.Instance) bool {
+		return *p1.InstanceType < *p2.InstanceType
+	}
+
+	name := func(p1, p2 *ec2.Instance) bool {
+		return ToName(p1.Tags) < ToName(p2.Tags)
+	}
+
+	state := func(p1, p2 *ec2.Instance) bool {
+		return *p1.State.Code < *p2.State.Code
+	}
+
 	fmt.Println("=== RI covered instances ===")
+	OrderBy(state, platform, instancetype, name).Sort(results.MatchInstanceResults)
 	for _, i := range results.MatchInstanceResults {
 		fmt.Printf("%-20s %-12s %-10s %-20s %-s\n",
 			*i.InstanceId,
@@ -108,6 +126,7 @@ func (cli *CLI) Run(args []string) int {
 	fmt.Println()
 
 	fmt.Println("=== RI *NOT* covered instances ===")
+	OrderBy(state, platform, instancetype, name).Sort(results.UnmatchInstanceResults)
 	for _, i := range results.UnmatchInstanceResults {
 		fmt.Printf("%-20s %-12s %-10s %-20s %-s\n",
 			*i.InstanceId,
