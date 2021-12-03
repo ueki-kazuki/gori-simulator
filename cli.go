@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -48,9 +49,12 @@ func getInstances(s *session.Session) ([]*ec2.Instance, error) {
 	instances := make([]*ec2.Instance, 0)
 	for _, r := range result.Reservations {
 		for _, i := range r.Instances {
+			// プラットフォームが未定義なら "Linux/UNIX" とみなす
 			if i.Platform == nil {
 				i.Platform = aws.String("Linux/UNIX")
 			}
+			// windows -> Windows (Capitalize)
+			*i.Platform = strings.Title(*i.Platform)
 		}
 		instances = append(instances, r.Instances...)
 	}
@@ -82,8 +86,6 @@ func (cli *CLI) Run(args []string) int {
 		fmt.Println(err.Error())
 		return ExitCodeError
 	}
-	// fmt.Println(instances)
-	// fmt.Println(ri_instances)
 
 	sim := &simurator.Simulator{
 		Instances:         instances,
