@@ -44,4 +44,5 @@ install:
 	go install $(LDFLAGS)
 
 test:
-	go test -v $(GOPACKAGES)
+	go test -v -cover -coverprofile=cover.out $(GOPACKAGES)
+	go tool cover -html=cover.out -o cover.html

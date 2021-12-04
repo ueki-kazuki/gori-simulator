@@ -32,7 +32,7 @@ func TestSimulator_is_match(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "match",
+			name: "Match",
 			fields: fields{ReservedInstances: []*ec2.ReservedInstances{{
 				InstanceCount:      aws.Int64(1),
 				InstanceType:       aws.String("t3.medium"),
@@ -48,7 +48,7 @@ func TestSimulator_is_match(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "num of RI is ZERO",
+			name: "Num of RI is ZERO",
 			fields: fields{ReservedInstances: []*ec2.ReservedInstances{{
 				InstanceCount:      aws.Int64(0),
 				InstanceType:       aws.String("t3.medium"),
