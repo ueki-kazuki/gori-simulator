@@ -24,7 +24,13 @@ type CLI struct {
 	errStream io.Writer
 }
 
-func getReservedInstances(client *ec2.Client) ([]types.ReservedInstances, error) {
+// for mock testing
+type Ec2Client interface {
+	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)
+	DescribeReservedInstances(ctx context.Context, params *ec2.DescribeReservedInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeReservedInstancesOutput, error)
+}
+
+func getReservedInstances(client Ec2Client) ([]types.ReservedInstances, error) {
 	param := ec2.DescribeReservedInstancesInput{
 		Filters: []types.Filter{
 			{
@@ -40,7 +46,7 @@ func getReservedInstances(client *ec2.Client) ([]types.ReservedInstances, error)
 	return result.ReservedInstances, nil
 }
 
-func getInstances(client *ec2.Client) ([]types.Instance, error) {
+func getInstances(client Ec2Client) ([]types.Instance, error) {
 	param := ec2.DescribeInstancesInput{}
 	result, err := client.DescribeInstances(context.TODO(), &param)
 	if err != nil {
