@@ -144,7 +144,7 @@ func TestOrderBy(t *testing.T) {
 			args: args{
 				lessFunc: []lessFunc{
 					func(p1, p2 *ec2.Instance) bool {
-						return *p1.InstanceType > *p2.InstanceType
+						return *p1.InstanceType < *p2.InstanceType
 					},
 					func(p1, p2 *ec2.Instance) bool {
 						return *p1.InstanceId > *p2.InstanceId
@@ -162,6 +162,33 @@ func TestOrderBy(t *testing.T) {
 				},
 			},
 			want: []string{"i-000000000002", "i-000000000001"},
+		},
+		{
+			args: args{
+				lessFunc: []lessFunc{
+					func(p1, p2 *ec2.Instance) bool {
+						return *p1.InstanceType < *p2.InstanceType
+					},
+					func(p1, p2 *ec2.Instance) bool {
+						return *p1.InstanceId < *p2.InstanceId
+					},
+				},
+				instances: []*ec2.Instance{
+					{
+						InstanceId:   aws.String("i-000000000001"),
+						InstanceType: aws.String("t3.small"),
+					},
+					{
+						InstanceId:   aws.String("i-000000000002"),
+						InstanceType: aws.String("t3.small"),
+					},
+					{
+						InstanceId:   aws.String("i-000000000003"),
+						InstanceType: aws.String("t1.small"),
+					},
+				},
+			},
+			want: []string{"i-000000000003", "i-000000000001", "i-000000000002"},
 		},
 	}
 	for _, tt := range tests {
