@@ -3,17 +3,17 @@ package simurator
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 func TestSimulator_is_match(t *testing.T) {
 	type fields struct {
-		Instances         []*ec2.Instance
-		ReservedInstances []*ec2.ReservedInstances
+		Instances         []types.Instance
+		ReservedInstances []types.ReservedInstances
 	}
 	type args struct {
-		i *ec2.Instance
+		i types.Instance
 	}
 	tests := []struct {
 		name   string
@@ -23,42 +23,42 @@ func TestSimulator_is_match(t *testing.T) {
 	}{
 		{
 			name:   "Stopped instance is NOT match",
-			fields: fields{ReservedInstances: []*ec2.ReservedInstances{{}}},
+			fields: fields{ReservedInstances: []types.ReservedInstances{{}}},
 			args: args{
-				i: &ec2.Instance{
-					State: &ec2.InstanceState{Name: aws.String("stopped")},
+				i: types.Instance{
+					State: &types.InstanceState{Name: types.InstanceStateNameStopped},
 				},
 			},
 			want: false,
 		},
 		{
 			name: "Match",
-			fields: fields{ReservedInstances: []*ec2.ReservedInstances{{
-				InstanceCount:      aws.Int64(1),
-				InstanceType:       aws.String("t3.medium"),
-				ProductDescription: aws.String("Linux/UNIX"),
+			fields: fields{ReservedInstances: []types.ReservedInstances{{
+				InstanceCount:      aws.Int32(1),
+				InstanceType:       "t3.medium",
+				ProductDescription: types.RIProductDescription("Linux/UNIX"),
 			}}},
 			args: args{
-				i: &ec2.Instance{
-					State:        &ec2.InstanceState{Name: aws.String("running")},
-					InstanceType: aws.String("t3.medium"),
-					Platform:     aws.String("Linux/UNIX"),
+				i: types.Instance{
+					State:        &types.InstanceState{Name: types.InstanceStateNameRunning},
+					InstanceType: "t3.medium",
+					Platform:     types.PlatformValues("Linux/UNIX"),
 				},
 			},
 			want: true,
 		},
 		{
 			name: "Num of RI is ZERO",
-			fields: fields{ReservedInstances: []*ec2.ReservedInstances{{
-				InstanceCount:      aws.Int64(0),
-				InstanceType:       aws.String("t3.medium"),
-				ProductDescription: aws.String("Linux/UNIX"),
+			fields: fields{ReservedInstances: []types.ReservedInstances{{
+				InstanceCount:      aws.Int32(0),
+				InstanceType:       "t3.medium",
+				ProductDescription: types.RIProductDescription("Linux/UNIX"),
 			}}},
 			args: args{
-				i: &ec2.Instance{
-					State:        &ec2.InstanceState{Name: aws.String("running")},
-					InstanceType: aws.String("t3.medium"),
-					Platform:     aws.String("Linux/UNIX"),
+				i: types.Instance{
+					State:        &types.InstanceState{Name: types.InstanceStateNameRunning},
+					InstanceType: "t3.medium",
+					Platform:     types.PlatformValues("Linux/UNIX"),
 				},
 			},
 			want: false,

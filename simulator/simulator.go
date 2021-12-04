@@ -1,20 +1,18 @@
 package simurator
 
 import (
-	"strings"
-
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 type Simulator struct {
-	Instances         []*ec2.Instance
-	ReservedInstances []*ec2.ReservedInstances
+	Instances         []types.Instance
+	ReservedInstances []types.ReservedInstances
 }
 
 type SimulatorResult struct {
-	MatchInstanceResults           []*ec2.Instance
-	UnmatchInstanceResults         []*ec2.Instance
-	UnmatchReservedInstanceResults []*ec2.ReservedInstances
+	MatchInstanceResults           []types.Instance
+	UnmatchInstanceResults         []types.Instance
+	UnmatchReservedInstanceResults []types.ReservedInstances
 }
 
 func (sim *Simulator) Simulate() (SimulatorResult, error) {
@@ -37,16 +35,16 @@ func (sim *Simulator) Simulate() (SimulatorResult, error) {
 	return results, nil
 }
 
-func (sim *Simulator) is_match(i *ec2.Instance) bool {
-	if *i.State.Name != ec2.InstanceStateNameRunning {
+func (sim *Simulator) is_match(i types.Instance) bool {
+	if i.State.Name != types.InstanceStateNameRunning {
 		return false
 	}
 	for _, ri := range sim.ReservedInstances {
 		if *ri.InstanceCount == 0 {
 			continue
 		}
-		if *i.InstanceType == *ri.InstanceType {
-			if strings.EqualFold(*i.Platform, *ri.ProductDescription) {
+		if i.InstanceType == ri.InstanceType {
+			if string(i.Platform) == string(ri.ProductDescription) {
 				*ri.InstanceCount -= 1
 				return true
 			}

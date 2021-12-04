@@ -3,13 +3,13 @@ package main
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 func TestMultiSorter_Len(t *testing.T) {
 	type fields struct {
-		instances []*ec2.Instance
+		instances []types.Instance
 		less      []lessFunc
 	}
 	tests := []struct {
@@ -19,7 +19,7 @@ func TestMultiSorter_Len(t *testing.T) {
 	}{
 		{
 			fields: fields{
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId: aws.String("i-000000000001"),
 					},
@@ -46,7 +46,7 @@ func TestMultiSorter_Len(t *testing.T) {
 
 func TestMultiSorter_Swap(t *testing.T) {
 	type fields struct {
-		instances []*ec2.Instance
+		instances []types.Instance
 		less      []lessFunc
 	}
 	type args struct {
@@ -61,7 +61,7 @@ func TestMultiSorter_Swap(t *testing.T) {
 	}{
 		{
 			fields: fields{
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId: aws.String("i-000000000001"),
 					},
@@ -97,7 +97,7 @@ func TestMultiSorter_Swap(t *testing.T) {
 func TestOrderBy(t *testing.T) {
 	type args struct {
 		lessFunc  []lessFunc
-		instances []*ec2.Instance
+		instances []types.Instance
 	}
 	tests := []struct {
 		name string
@@ -107,11 +107,11 @@ func TestOrderBy(t *testing.T) {
 		{
 			args: args{
 				lessFunc: []lessFunc{
-					func(p1, p2 *ec2.Instance) bool {
+					func(p1, p2 types.Instance) bool {
 						return *p1.InstanceId < *p2.InstanceId
 					},
 				},
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId: aws.String("i-000000000001"),
 					},
@@ -125,11 +125,11 @@ func TestOrderBy(t *testing.T) {
 		{
 			args: args{
 				lessFunc: []lessFunc{
-					func(p1, p2 *ec2.Instance) bool {
+					func(p1, p2 types.Instance) bool {
 						return *p1.InstanceId > *p2.InstanceId
 					},
 				},
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId: aws.String("i-000000000001"),
 					},
@@ -143,21 +143,21 @@ func TestOrderBy(t *testing.T) {
 		{
 			args: args{
 				lessFunc: []lessFunc{
-					func(p1, p2 *ec2.Instance) bool {
-						return *p1.InstanceType < *p2.InstanceType
+					func(p1, p2 types.Instance) bool {
+						return string(p1.InstanceType) < string(p2.InstanceType)
 					},
-					func(p1, p2 *ec2.Instance) bool {
+					func(p1, p2 types.Instance) bool {
 						return *p1.InstanceId > *p2.InstanceId
 					},
 				},
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId:   aws.String("i-000000000001"),
-						InstanceType: aws.String("t3.small"),
+						InstanceType: "t3.small",
 					},
 					{
 						InstanceId:   aws.String("i-000000000002"),
-						InstanceType: aws.String("t3.small"),
+						InstanceType: "t3.small",
 					},
 				},
 			},
@@ -166,25 +166,25 @@ func TestOrderBy(t *testing.T) {
 		{
 			args: args{
 				lessFunc: []lessFunc{
-					func(p1, p2 *ec2.Instance) bool {
-						return *p1.InstanceType < *p2.InstanceType
+					func(p1, p2 types.Instance) bool {
+						return string(p1.InstanceType) < string(p2.InstanceType)
 					},
-					func(p1, p2 *ec2.Instance) bool {
+					func(p1, p2 types.Instance) bool {
 						return *p1.InstanceId < *p2.InstanceId
 					},
 				},
-				instances: []*ec2.Instance{
+				instances: []types.Instance{
 					{
 						InstanceId:   aws.String("i-000000000001"),
-						InstanceType: aws.String("t3.small"),
+						InstanceType: "t3.small",
 					},
 					{
 						InstanceId:   aws.String("i-000000000002"),
-						InstanceType: aws.String("t3.small"),
+						InstanceType: "t3.small",
 					},
 					{
 						InstanceId:   aws.String("i-000000000003"),
-						InstanceType: aws.String("t1.small"),
+						InstanceType: "t1.small",
 					},
 				},
 			},

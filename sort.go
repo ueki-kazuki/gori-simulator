@@ -7,10 +7,10 @@ package main
 import (
 	"sort"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
-type lessFunc func(p1, p2 *ec2.Instance) bool
+type lessFunc func(p1, p2 types.Instance) bool
 
 func OrderBy(lessFunc ...lessFunc) *MultiSorter {
 	return &MultiSorter{
@@ -19,11 +19,11 @@ func OrderBy(lessFunc ...lessFunc) *MultiSorter {
 }
 
 type MultiSorter struct {
-	instances []*ec2.Instance
+	instances []types.Instance
 	less      []lessFunc
 }
 
-func (ms *MultiSorter) Sort(instances []*ec2.Instance) {
+func (ms *MultiSorter) Sort(instances []types.Instance) {
 	ms.instances = instances
 	sort.Sort(ms)
 }

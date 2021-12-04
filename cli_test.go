@@ -3,13 +3,13 @@ package main
 import (
 	"testing"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 )
 
 func TestToName(t *testing.T) {
 	type args struct {
-		tags []*ec2.Tag
+		tags []types.Tag
 	}
 	tests := []struct {
 		name string
@@ -18,7 +18,7 @@ func TestToName(t *testing.T) {
 	}{
 		{
 			args: args{
-				tags: []*ec2.Tag{
+				tags: []types.Tag{
 					{
 						Key:   aws.String("Name"),
 						Value: aws.String("Server01"),
@@ -33,7 +33,7 @@ func TestToName(t *testing.T) {
 		},
 		{
 			args: args{
-				tags: []*ec2.Tag{
+				tags: []types.Tag{
 					{
 						Key:   aws.String("Group"),
 						Value: aws.String("AWS Division"),

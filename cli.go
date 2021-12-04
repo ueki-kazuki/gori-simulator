@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"io"
-	"strings"
+	"log"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
+	"context"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	simurator "github.com/ueki-kazuki/gori-simulator/simulator"
 )
 
@@ -21,47 +24,43 @@ type CLI struct {
 	errStream io.Writer
 }
 
-func getReservedInstances(s *session.Session) ([]*ec2.ReservedInstances, error) {
-	svc := ec2.New(s)
+func getReservedInstances(client *ec2.Client) ([]types.ReservedInstances, error) {
 	param := ec2.DescribeReservedInstancesInput{
-		Filters: []*ec2.Filter{
+		Filters: []types.Filter{
 			{
 				Name:   aws.String("state"),
-				Values: []*string{aws.String("active")},
+				Values: []string{"active"},
 			},
 		},
 	}
-	result, err := svc.DescribeReservedInstances(&param)
+	result, err := client.DescribeReservedInstances(context.TODO(), &param)
 	if err != nil {
 		return nil, err
 	}
 	return result.ReservedInstances, nil
 }
 
-func getInstances(s *session.Session) ([]*ec2.Instance, error) {
-	svc := ec2.New(s)
+func getInstances(client *ec2.Client) ([]types.Instance, error) {
 	param := ec2.DescribeInstancesInput{}
-	result, err := svc.DescribeInstances(&param)
+	result, err := client.DescribeInstances(context.TODO(), &param)
 	if err != nil {
 		return nil, err
 	}
 
-	instances := make([]*ec2.Instance, 0)
+	instances := make([]types.Instance, 0)
 	for _, r := range result.Reservations {
 		for _, i := range r.Instances {
 			// プラットフォームが未定義なら "Linux/UNIX" とみなす
-			if i.Platform == nil {
-				i.Platform = aws.String("Linux/UNIX")
+			if i.Platform == "" {
+				i.Platform = "Linux/UNIX"
 			}
-			// windows -> Windows (Capitalize)
-			*i.Platform = strings.Title(*i.Platform)
 		}
 		instances = append(instances, r.Instances...)
 	}
 	return instances, nil
 }
 
-func ToName(tags []*ec2.Tag) string {
+func ToName(tags []types.Tag) string {
 	for _, t := range tags {
 		if *t.Key == "Name" {
 			return *t.Value
@@ -71,17 +70,20 @@ func ToName(tags []*ec2.Tag) string {
 }
 
 func (cli *CLI) Run(args []string) int {
+	cfg, err := config.LoadDefaultConfig(context.TODO())
+	if err != nil {
+		log.Fatal(err)
+		return ExitCodeError
+	}
 
-	s := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
+	client := ec2.NewFromConfig(cfg)
 
-	instances, err := getInstances(s)
+	instances, err := getInstances(client)
 	if err != nil {
 		fmt.Println(err.Error())
 		return ExitCodeError
 	}
-	ri_instances, err := getReservedInstances(s)
+	ri_instances, err := getReservedInstances(client)
 	if err != nil {
 		fmt.Println(err.Error())
 		return ExitCodeError
@@ -97,19 +99,23 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeError
 	}
 
-	platform := func(p1, p2 *ec2.Instance) bool {
-		return *p1.Platform < *p2.Platform
+	platform := func(p1, p2 types.Instance) bool {
+		if p1.Platform != p2.Platform {
+			return p1.Platform == ""
+		} else {
+			return true
+		}
 	}
 
-	instancetype := func(p1, p2 *ec2.Instance) bool {
-		return *p1.InstanceType < *p2.InstanceType
+	instancetype := func(p1, p2 types.Instance) bool {
+		return p1.InstanceType < p2.InstanceType
 	}
 
-	name := func(p1, p2 *ec2.Instance) bool {
+	name := func(p1, p2 types.Instance) bool {
 		return ToName(p1.Tags) < ToName(p2.Tags)
 	}
 
-	state := func(p1, p2 *ec2.Instance) bool {
+	state := func(p1, p2 types.Instance) bool {
 		return *p1.State.Code < *p2.State.Code
 	}
 
@@ -118,10 +124,10 @@ func (cli *CLI) Run(args []string) int {
 	for _, i := range results.MatchInstanceResults {
 		fmt.Printf("%-20s %-12s %-10s %-20s %-s\n",
 			*i.InstanceId,
-			*i.InstanceType,
-			*i.Platform,
+			i.InstanceType,
+			i.Platform,
 			ToName(i.Tags),
-			*i.State.Name)
+			i.State.Name)
 	}
 	fmt.Println()
 
@@ -130,10 +136,10 @@ func (cli *CLI) Run(args []string) int {
 	for _, i := range results.UnmatchInstanceResults {
 		fmt.Printf("%-20s %-12s %-10s %-20s %-s\n",
 			*i.InstanceId,
-			*i.InstanceType,
-			*i.Platform,
+			i.InstanceType,
+			i.Platform,
 			ToName(i.Tags),
-			*i.State.Name)
+			i.State.Name)
 	}
 	fmt.Println()
 
@@ -141,11 +147,11 @@ func (cli *CLI) Run(args []string) int {
 	for _, ri := range results.UnmatchReservedInstanceResults {
 		fmt.Printf("%20s %-12s %-10s %-12s %3d %v\n",
 			"",
-			*ri.InstanceType,
-			*ri.ProductDescription,
-			*ri.OfferingType,
+			ri.InstanceType,
+			ri.ProductDescription,
+			ri.OfferingType,
 			*ri.InstanceCount,
-			*ri.End)
+			ri.End)
 	}
 
 	return ExitCodeOK
