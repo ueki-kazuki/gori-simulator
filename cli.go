@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"strings"
 
 	"context"
 
@@ -60,8 +61,10 @@ func getInstances(client Ec2Client) ([]types.Instance, error) {
 			if i.Platform == "" {
 				i.Platform = "Linux/UNIX"
 			}
+			// windows -> Windows (Capitalize)
+			i.Platform = types.PlatformValues(strings.Title(string(i.Platform)))
+			instances = append(instances, i)
 		}
-		instances = append(instances, r.Instances...)
 	}
 	return instances, nil
 }

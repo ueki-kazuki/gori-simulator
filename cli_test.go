@@ -76,8 +76,8 @@ func (m MockEc2Client) DescribeReservedInstances(ctx context.Context, params *ec
 }
 
 func (m MockEc2Client) DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error) {
-	for _, ri := range m.instances {
-		if ri.Platform == "Plan9" {
+	for _, i := range m.instances {
+		if i.Platform == "Plan9" {
 			return nil, errors.New("invalid Platform")
 		}
 	}
@@ -165,7 +165,11 @@ func Test_getInstances(t *testing.T) {
 					instances: []types.Instance{
 						{
 							InstanceType: "t3.medium",
-							Platform:     "Linux/UNIX",
+							Platform:     "",
+						},
+						{
+							InstanceType: "t3.medium",
+							Platform:     "windows",
 						},
 					},
 				},
@@ -174,6 +178,10 @@ func Test_getInstances(t *testing.T) {
 				{
 					InstanceType: "t3.medium",
 					Platform:     "Linux/UNIX",
+				},
+				{
+					InstanceType: "t3.medium",
+					Platform:     "Windows",
 				},
 			},
 		},
